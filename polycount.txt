@@ -1,0 +1,1 @@
+Model: Building-Medium-02 (2) | Polygons (Triangles): 40256 | Vertices: 54226

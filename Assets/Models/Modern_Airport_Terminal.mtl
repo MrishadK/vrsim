@@ -1,0 +1,58 @@
+# Modern Airport Terminal Materials
+
+newmtl Mat_WhiteComposite
+Kd 0.94 0.95 0.97
+Ks 0.3 0.3 0.35
+Ns 60.0
+d 1.0
+
+newmtl Mat_CurtainGlass
+Kd 0.22 0.48 0.68
+Ks 0.9 0.95 1.0
+Ns 120.0
+d 0.65
+
+newmtl Mat_DarkSteel
+Kd 0.15 0.16 0.18
+Ks 0.6 0.6 0.65
+Ns 80.0
+d 1.0
+
+newmtl Mat_PolishedMarble
+Kd 0.90 0.91 0.92
+Ks 0.7 0.7 0.75
+Ns 95.0
+d 1.0
+
+newmtl Mat_WarmWood
+Kd 0.68 0.44 0.26
+Ks 0.2 0.2 0.2
+Ns 30.0
+d 1.0
+
+newmtl Mat_CyanGlow
+Kd 0.1 0.9 1.0
+Ka 0.2 1.0 1.0
+Ks 1.0 1.0 1.0
+Ns 100.0
+d 1.0
+
+newmtl Mat_ApronAsphalt
+Kd 0.22 0.23 0.25
+Ks 0.1 0.1 0.1
+Ns 15.0
+d 1.0
+
+newmtl Mat_RedBeacon
+Kd 1.0 0.1 0.1
+Ka 1.0 0.1 0.1
+Ks 1.0 0.5 0.5
+Ns 100.0
+d 1.0
+
+newmtl Mat_BeltRubber
+Kd 0.12 0.12 0.13
+Ks 0.1 0.1 0.1
+Ns 20.0
+d 1.0
+

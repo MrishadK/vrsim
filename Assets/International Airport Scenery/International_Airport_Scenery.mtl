@@ -1,0 +1,202 @@
+newmtl default
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/p1.jpg
+
+newmtl default_airport
+d 1
+Ns 0.75
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/a1b_01.jpg
+
+newmtl default_airport_main_bldg
+d 1
+Ns 0.75
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/rf1_01.jpg
+
+newmtl default_wn
+d 1
+Ns 0.75
+Ni 0
+Ka 0 0 0
+Kd 0 0 0
+Ks 1 1 1
+Km 0
+
+newmtl default_airport_main_bldg_bldgs
+d 1
+Ns 0.75
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/a1b.jpg
+
+newmtl default_grass2
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/gr1b2.jpg
+
+newmtl default_parking_lot2
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/f1a1.jpg
+
+newmtl default_road
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0.27451 0.27451 0.27451
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl default_terminal_bridges2
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/a1b.jpg
+
+newmtl default_bridges_tires2
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0 0 0
+Ks 1 1 1
+Km 0
+
+newmtl default_plane_floor_sign2
+d 1
+Ns 1
+Ni 0
+Ka 1 1 0
+Kd 1 1 0
+Ks 1 1 1
+Km 0
+
+newmtl default_pavement_lines
+d 1
+Ns 1
+Ni 0
+Ka 0.27451 0.27451 0.27451
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+
+newmtl default_airport_lights
+d 1
+Ns 1
+Ni 0
+Ka 0 1 1
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+
+newmtl default_airport_poles
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+
+newmtl default_hangars_tanks2
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/wd2b.jpg
+
+newmtl default_extras
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/f1a1.jpg
+
+newmtl default_road_sign
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/s1b.jpg
+
+newmtl default_road_sign_1
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/s2b.jpg
+
+newmtl default_palm_stems
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/1arw.jpg
+
+newmtl default_palm_leaves
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0
+map_Kd /Maps/Doc4b2.jpg
+
+newmtl default_airport_sign
+d 1
+Ns 1
+Ni 0
+Ka 0 1 1
+Kd 0 1 1
+Ks 1 1 1
+Km 0
+

@@ -1,0 +1,114 @@
+newmtl Aqua_Accent
+Kd 0 0.72 0.76
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Aircraft_Glazing
+Kd 0.015 0.055 0.1
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Charcoal_Trim
+Kd 0.075 0.11 0.14
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Concept_Navy
+Kd 0.025 0.12 0.22
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Airframe_Ivory
+Kd 0.91 0.94 0.95
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Wing_Ceramic_Grey
+Kd 0.68 0.76 0.79
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Engine_Nacelle
+Kd 0.74 0.8 0.82
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Brushed_Titanium
+Kd 0.5 0.6 0.65
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Fan_Blades
+Kd 0.16 0.23 0.26
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Tyre_Rubber
+Kd 0.035 0.042 0.048
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Cabin_Light
+Kd 0.87 0.91 0.85
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Port_Nav_Lamp
+Kd 0.72 0.02 0.04
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Starboard_Nav_Lamp
+Kd 0.02 0.63 0.2
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Cabin_Warm_Grey
+Kd 0.78 0.81 0.8
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Cabin_Carpet
+Kd 0.14 0.19 0.23
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Seat_Structure
+Kd 0.28 0.33 0.36
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Premium_Upholstery
+Kd 0.29 0.14 0.075
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Seatback_Screens
+Kd 0.008 0.025 0.035
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
+newmtl Economy_Upholstery
+Kd 0.035 0.2 0.31
+Ka 0.04 0.04 0.04
+Ks 0.15 0.15 0.15
+Ns 48
+
