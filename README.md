@@ -12,8 +12,8 @@ An immersive virtual reality airport experience and flight simulation built with
 
 ## 🌟 Key Features
 
-### 🏢 Real-Time International Terminal Architecture
-- **Multi-Zone Concourse**: Detailed check-in desks, security checkpoints, passport e-gates, departure lounges, and boarding gates.
+### 🏢 International Terminal Architecture
+- **Terminal Design & Layout**: Modeled fictional international airport terminal concourse with check-in desks, security screening zones, passport control counters, departure lounges, and boarding gates.
 - **Glass Curtain Facades**: High-gloss, transparent curtain walls overlooking active aircraft ramp stands.
 - **Telescopic Jetways**: Articulated passenger boarding bridges complete with pivoting rotundas, telescopic tunnel sections, and aircraft docking cabs.
 
@@ -31,7 +31,7 @@ An immersive virtual reality airport experience and flight simulation built with
 ### 🌅 Dynamic Environment & Lighting
 - **Time of Day System**: Smooth transitions from morning golden hour to high noon, sunset, and night.
 - **Intelligent Lighting Rig**: Automatic activation of high-mast apron floodlights, terminal facade wash lights, and taxiway guidance lights as dusk approaches.
-- **Weather Simulation**: Dynamic rainfall particle systems with real-time road/tarmac wetness and reflection tuning.
+- **Weather Simulation**: Dynamic rainfall particle systems with dynamic road/tarmac wetness and reflection tuning.
 
 ### 🎧 Spatial 3D Audio
 - Real air traffic control (ATC) radio chatter ambiance.

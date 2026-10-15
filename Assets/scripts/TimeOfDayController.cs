@@ -32,6 +32,12 @@ public class TimeOfDayController : MonoBehaviour
     public Transform buildingLightingRig;
     [Tooltip("Optional parent containing the Boeing 737 showcase aircraft.")]
     public Transform aircraftShowcase;
+    [Tooltip("Optional secondary building lighting system (e.g. Modern Airport Terminal interior ceiling downlights).")]
+    public Transform modernTerminalLighting;
+    [Tooltip("Optional background airport environment lighting (e.g. hangars, background towers).")]
+    public Transform backgroundEnvironment;
+    [Tooltip("Material used for terminal curtain glass to control nocturnal window emission.")]
+    public Material curtainGlassMaterial;
 
     private static TimeOfDayController instance;
     public static TimeOfDayController Instance => instance;
@@ -116,8 +122,18 @@ public class TimeOfDayController : MonoBehaviour
             }
         }
 
+        // Configure Sun to cast 100% solid, opaque shadows so sunlight CANNOT penetrate or pass through buildings
+        if (sunLight != null)
+        {
+            sunLight.shadows = LightShadows.Soft;
+            sunLight.shadowStrength = 1.0f; // 100% opaque solid shadows - prevents sunlight going through buildings
+            sunLight.shadowBias = 0.015f;
+            sunLight.shadowNormalBias = 0.15f;
+        }
+
         var scenery = GameObject.Find("LiveAirportScenery");
 
+        // 1. Apron Stadium High-Masts & Taxiway Lights
         if (airportLightingRig == null)
         {
             if (scenery != null)
@@ -127,11 +143,12 @@ public class TimeOfDayController : MonoBehaviour
             }
             if (airportLightingRig == null)
             {
-                var rigObj = GameObject.Find("ApronLightingRig") ?? GameObject.Find("Architectural_Lighting_Rig");
+                var rigObj = GameObject.Find("ApronLightingRig");
                 if (rigObj != null) airportLightingRig = rigObj.transform;
             }
         }
 
+        // 2. Terminal Building Architectural & Interior Lighting Rig
         if (buildingLightingRig == null)
         {
             if (scenery != null)
@@ -141,11 +158,43 @@ public class TimeOfDayController : MonoBehaviour
             }
             if (buildingLightingRig == null)
             {
-                var bRigObj = GameObject.Find("TerminalBuildingLightingRig");
+                var bRigObj = GameObject.Find("TerminalBuildingLightingRig") ?? GameObject.Find("Architectural_Lighting_Rig");
                 if (bRigObj != null) buildingLightingRig = bRigObj.transform;
             }
         }
 
+        // 3. Modern Terminal 05_Lighting_System
+        if (modernTerminalLighting == null)
+        {
+            var termObj = GameObject.Find("Modern_Airport_Terminal") ?? GameObject.Find("Modern_International_Airport_Terminal");
+            if (termObj != null)
+            {
+                var lSys = termObj.transform.Find("05_Lighting_System");
+                if (lSys != null) modernTerminalLighting = lSys;
+            }
+            if (modernTerminalLighting == null)
+            {
+                var lSys = GameObject.Find("05_Lighting_System");
+                if (lSys != null) modernTerminalLighting = lSys.transform;
+            }
+        }
+
+        // 4. Background Airport Environment
+        if (backgroundEnvironment == null)
+        {
+            if (scenery != null)
+            {
+                var bg = scenery.transform.Find("Background_Airport_Environment");
+                if (bg != null) backgroundEnvironment = bg;
+            }
+            if (backgroundEnvironment == null)
+            {
+                var bgObj = GameObject.Find("Background_Airport_Environment");
+                if (bgObj != null) backgroundEnvironment = bgObj.transform;
+            }
+        }
+
+        // 5. Aircraft Showcase
         if (aircraftShowcase == null)
         {
             if (scenery != null)
@@ -160,6 +209,7 @@ public class TimeOfDayController : MonoBehaviour
             }
         }
 
+        // 6. Skybox Material
         if (skyboxMaterial == null && RenderSettings.skybox != null)
         {
             if (Application.isPlaying)
@@ -170,6 +220,46 @@ public class TimeOfDayController : MonoBehaviour
             else
             {
                 skyboxMaterial = RenderSettings.skybox;
+            }
+        }
+
+        // 7. Curtain Glass Material for Nocturnal Window Glow
+        if (curtainGlassMaterial == null)
+        {
+            var allMats = Resources.FindObjectsOfTypeAll<Material>();
+            foreach (var m in allMats)
+            {
+                if (m != null && m.name.Contains("CurtainGlass"))
+                {
+                    curtainGlassMaterial = m;
+                    break;
+                }
+            }
+        }
+
+        // 8. Enforce Two-Sided Shadow Casting on all Terminal / Building renderers
+        EnforceBuildingTwoSidedShadows();
+    }
+
+    /// <summary>
+    /// Enforces two-sided shadow casting on all airport buildings so that sunlight cannot pass through single-sided polygons or backfaces.
+    /// </summary>
+    private void EnforceBuildingTwoSidedShadows()
+    {
+        var allRenderers = FindObjectsOfType<MeshRenderer>();
+        foreach (var r in allRenderers)
+        {
+            if (r == null) continue;
+            string objName = r.gameObject.name;
+            string parentName = (r.transform.parent != null) ? r.transform.parent.name : "";
+
+            if (objName.Contains("Terminal") || objName.Contains("Roof") || objName.Contains("Wall") ||
+                objName.Contains("Facade") || objName.Contains("Hangar") || objName.Contains("Tower") ||
+                objName.Contains("Building") || objName.Contains("Airport") ||
+                parentName.Contains("Terminal") || parentName.Contains("Architecture") || parentName.Contains("Building"))
+            {
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+                r.receiveShadows = true;
             }
         }
     }
@@ -189,14 +279,10 @@ public class TimeOfDayController : MonoBehaviour
     /// </summary>
     public void ApplyTimeOfDay(float hour)
     {
-        if (sunLight == null || airportLightingRig == null || buildingLightingRig == null)
+        if (sunLight == null || (airportLightingRig == null && buildingLightingRig == null))
             ResolveReferences();
 
         // ── 1. Sun & Moon Key Light Rotation ──
-        // Morning & Midday: Sun shines from yaw 28°-58° as a glorious Key Light onto the aircraft & terminal facade.
-        // Sunset: Moves to yaw 265° for golden-hour backlight rim lighting.
-        // Evening & Night: Seamlessly transitions into a high-angle Nocturnal Moonlight Key Light (pitch 38°, yaw 48°),
-        // preventing the scene from ever going dark and keeping all aircraft & terminal geometry clearly illuminated!
         float pitch;
         float yaw;
 
@@ -207,27 +293,34 @@ public class TimeOfDayController : MonoBehaviour
             pitch = Mathf.Lerp(16f, 46f, Mathf.SmoothStep(0f, 1f, m));
             yaw = Mathf.LerpAngle(28f, 58f, m);
         }
-        else if (hour <= 17.5f)
+        else if (hour <= 16.5f)
         {
-            // Afternoon: 12:00 (pitch 46°, yaw 58°) -> 17:30 (pitch 24°, yaw 110°)
-            float a = Mathf.InverseLerp(12.0f, 17.5f, hour);
-            pitch = Mathf.Lerp(46f, 24f, Mathf.SmoothStep(0f, 1f, a));
-            yaw = Mathf.LerpAngle(58f, 110f, a);
+            // Afternoon: 12:00 (pitch 46°, yaw 58°) -> 16:30 (pitch 30°, yaw 95°)
+            float a = Mathf.InverseLerp(12.0f, 16.5f, hour);
+            pitch = Mathf.Lerp(46f, 30f, Mathf.SmoothStep(0f, 1f, a));
+            yaw = Mathf.LerpAngle(58f, 95f, a);
         }
-        else if (hour <= 19.0f)
+        else if (hour <= 18.5f)
         {
-            // Golden Hour / Sunset: 17:30 (pitch 24°, yaw 110°) -> 19:00 (pitch 6°, yaw 265°)
-            float s = Mathf.InverseLerp(17.5f, 19.0f, hour);
-            pitch = Mathf.Lerp(24f, 6f, Mathf.SmoothStep(0f, 1f, s));
-            yaw = Mathf.LerpAngle(110f, 265f, Mathf.SmoothStep(0f, 1f, s));
+            // Late Afternoon / Sunset Golden Hour: 16:30 (pitch 30°, yaw 95°) -> 18:30 (pitch 6°, yaw 245°)
+            float s = Mathf.InverseLerp(16.5f, 18.5f, hour);
+            pitch = Mathf.Lerp(30f, 6f, Mathf.SmoothStep(0f, 1f, s));
+            yaw = Mathf.LerpAngle(95f, 245f, Mathf.SmoothStep(0f, 1f, s));
+        }
+        else if (hour <= 19.3f)
+        {
+            // Twilight Dusk / Sun dips below horizon: 18:30 (pitch 6°, yaw 245°) -> 19:18 (pitch -4°, yaw 265°)
+            float d = Mathf.InverseLerp(18.5f, 19.3f, hour);
+            pitch = Mathf.Lerp(6f, -4f, Mathf.SmoothStep(0f, 1f, d));
+            yaw = Mathf.LerpAngle(245f, 265f, Mathf.SmoothStep(0f, 1f, d));
         }
         else
         {
-            // Evening & Night (19:00 -> 20:30): Transitions smoothly from sunset into
-            // a powerful Nocturnal Moonlight Key at Pitch 38°, Yaw 48°!
-            float e = Mathf.InverseLerp(19.0f, 20.5f, hour);
-            pitch = Mathf.Lerp(6f, 38f, Mathf.SmoothStep(0f, 1f, e));
-            yaw = Mathf.LerpAngle(265f, 48f, Mathf.SmoothStep(0f, 1f, e));
+            // Evening & Night (19:18 -> 20:30): Gentle Nocturnal Moonlight Key Light shining from steep overhead angle!
+            // Pitch 48°, Yaw 48° - steep downward angle eliminates horizontal rays cutting through building openings!
+            float n = Mathf.InverseLerp(19.3f, 20.5f, hour);
+            pitch = Mathf.Lerp(45f, 50f, Mathf.SmoothStep(0f, 1f, n));
+            yaw = 48f;
         }
 
         if (sunLight != null)
@@ -236,9 +329,9 @@ public class TimeOfDayController : MonoBehaviour
             sunLight.color = EvaluateSunColor(hour);
             sunLight.intensity = EvaluateSunIntensity(hour);
             sunLight.shadows = LightShadows.Soft;
-            sunLight.shadowStrength = (hour >= 19.0f) ? 0.65f : 0.86f;
-            sunLight.shadowBias = 0.02f;
-            sunLight.shadowNormalBias = 0.12f;
+            sunLight.shadowStrength = 1.0f; // 100% opaque solid shadows - completely blocks sunlight through buildings!
+            sunLight.shadowBias = 0.015f;
+            sunLight.shadowNormalBias = 0.15f;
         }
 
         // ── 2. Ambient Lighting & Fog ──
@@ -270,39 +363,50 @@ public class TimeOfDayController : MonoBehaviour
             // Midday (brilliant aeronautical daylight)
             return new Color(0.99f, 0.98f, 1.0f);
         }
-        else if (hour < 17.5f)
+        else if (hour < 17.0f)
         {
             // Late Afternoon (soft warm amber)
-            float t = Mathf.InverseLerp(15.5f, 17.5f, hour);
+            float t = Mathf.InverseLerp(15.5f, 17.0f, hour);
             return Color.Lerp(new Color(0.99f, 0.98f, 1.0f), new Color(1f, 0.85f, 0.62f), t);
         }
-        else if (hour < 19.0f)
+        else if (hour < 18.5f)
         {
             // Sunset / Golden Hour (fiery rich amber-gold)
-            float t = Mathf.InverseLerp(17.5f, 19.0f, hour);
-            return Color.Lerp(new Color(1f, 0.85f, 0.62f), new Color(1f, 0.52f, 0.22f), t);
+            float t = Mathf.InverseLerp(17.0f, 18.5f, hour);
+            return Color.Lerp(new Color(1f, 0.85f, 0.62f), new Color(1f, 0.48f, 0.20f), t);
+        }
+        else if (hour < 19.3f)
+        {
+            // Twilight Dusk (deep violet-crimson twilight)
+            float t = Mathf.InverseLerp(18.5f, 19.3f, hour);
+            return Color.Lerp(new Color(1f, 0.48f, 0.20f), new Color(0.45f, 0.42f, 0.75f), t);
         }
         else
         {
-            // Evening / Night (Luminous Celestial Moonlight steel-blue)
-            float t = Mathf.InverseLerp(19.0f, 20.5f, hour);
-            return Color.Lerp(new Color(1f, 0.52f, 0.22f), new Color(0.55f, 0.72f, 0.98f), t);
+            // Evening / Night (Celestial Moonlight cool steel-blue)
+            float t = Mathf.InverseLerp(19.3f, 20.5f, hour);
+            return Color.Lerp(new Color(0.45f, 0.42f, 0.75f), new Color(0.55f, 0.72f, 0.98f), t);
         }
     }
 
     private float EvaluateSunIntensity(float hour)
     {
         if (hour < 8f)
-            return Mathf.Lerp(1.2f, 1.75f, Mathf.InverseLerp(6f, 8f, hour));
+            return Mathf.Lerp(1.0f, 1.75f, Mathf.InverseLerp(6f, 8f, hour));
         else if (hour < 15.5f)
             return 1.85f;
-        else if (hour < 17.5f)
-            return Mathf.Lerp(1.85f, 1.45f, Mathf.InverseLerp(15.5f, 17.5f, hour));
-        else if (hour < 19.0f)
-            return Mathf.Lerp(1.45f, 0.85f, Mathf.InverseLerp(17.5f, 19.0f, hour));
+        else if (hour < 17.0f)
+            return Mathf.Lerp(1.85f, 1.45f, Mathf.InverseLerp(15.5f, 17.0f, hour));
+        else if (hour < 18.5f)
+            // Sunset golden hour: fades smoothly from 1.45f down to 0.45f
+            return Mathf.Lerp(1.45f, 0.45f, Mathf.InverseLerp(17.0f, 18.5f, hour));
+        else if (hour < 19.2f)
+            // Dusk / Twilight: sun fades out as it dips below horizon
+            return Mathf.Lerp(0.45f, 0.08f, Mathf.InverseLerp(18.5f, 19.2f, hour));
         else
-            // Night Moonlight Key: Holds steady at 0.95f - 1.10f so the scene is beautifully illuminated!
-            return Mathf.Lerp(0.85f, 1.05f, Mathf.InverseLerp(19.0f, 20.5f, hour));
+            // Night Moonlight Key: Holds at a subtle, soft 0.08f - 0.12f
+            // Soft celestial moonlight that does NOT overpower artificial airport lighting or shine through buildings!
+            return Mathf.Lerp(0.08f, 0.12f, Mathf.InverseLerp(19.2f, 20.5f, hour));
     }
 
     private void ApplyAmbientAndFog(float hour)
@@ -398,16 +502,17 @@ public class TimeOfDayController : MonoBehaviour
 
     private void ApplyAirportArtificialLights(float hour)
     {
-        bool isEvening = (hour >= 17.5f);
-        bool isDawn = (hour <= 7.5f);
-        bool needsFloodlights = (isEvening || isDawn);
+        // Smooth transition factors
+        // Evening transition begins smoothly at 16.8f, reaching full brilliance by 18.2f - 19.0f
+        float eveningFactor = Mathf.Clamp01(Mathf.InverseLerp(16.8f, 18.5f, hour));
+        float dawnFactor = (hour <= 8.0f) ? Mathf.Clamp01(Mathf.InverseLerp(8.0f, 6.5f, hour)) : 0f;
+        float nightFactor = Mathf.Max(eveningFactor, dawnFactor);
+        bool needsFloodlights = (nightFactor > 0.05f);
 
-        // 1. Apron High-Mast Stadium Floodlights (Towers Gate 12 & Gate 14)
+        // ── 1. Apron Stadium High-Mast Floodlights & Taxiway Guidance Lights ──
         if (airportLightingRig != null)
         {
-            float mastIntensity = isEvening ? Mathf.Lerp(4.0f, 32.0f, Mathf.InverseLerp(17.5f, 19.5f, hour)) :
-                                  isDawn ? Mathf.Lerp(32.0f, 4.0f, Mathf.InverseLerp(6.0f, 7.5f, hour)) : 0.5f;
-
+            float mastIntensity = Mathf.Lerp(3.0f, 32.0f, nightFactor);
             var lights = airportLightingRig.GetComponentsInChildren<Light>(true);
             foreach (var l in lights)
             {
@@ -420,55 +525,53 @@ public class TimeOfDayController : MonoBehaviour
                 else if (l.type == LightType.Point)
                 {
                     // Taxiway edge lights (blue) and centerline markers (amber)
-                    l.enabled = (hour >= 17.0f || hour <= 8.0f);
-                    l.intensity = (hour >= 17.0f || hour <= 8.0f) ? 3.8f : 1.4f;
-                    if (l.range < 6f) l.range = 7.0f;
+                    l.enabled = needsFloodlights;
+                    l.intensity = Mathf.Lerp(1.2f, 4.0f, nightFactor);
+                    if (l.range < 6f) l.range = 7.5f;
                 }
             }
         }
 
-        // 2. Building Architectural Lights (Terminal Facade Wash, Window Glows, Canopy)
-        if (buildingLightingRig != null)
+        // ── 2. Terminal Building Architectural, Facade, Window Glow & Interior Lights ──
+        ApplyBuildingLightsGroup(buildingLightingRig, nightFactor, needsFloodlights);
+        ApplyBuildingLightsGroup(modernTerminalLighting, nightFactor, needsFloodlights);
+
+        // ── 3. Background Airport Hangars & Remote Masts ──
+        if (backgroundEnvironment != null)
         {
-            var bLights = buildingLightingRig.GetComponentsInChildren<Light>(true);
-            foreach (var l in bLights)
+            var bgLights = backgroundEnvironment.GetComponentsInChildren<Light>(true);
+            foreach (var l in bgLights)
             {
-                if (l.name.Contains("WindowGlow"))
+                if (l.type == LightType.Spot)
                 {
-                    // Terminal concourse interior lights stay active 24/7 like a real airport!
+                    l.enabled = needsFloodlights;
+                    l.intensity = Mathf.Lerp(2.0f, 25.0f, nightFactor);
+                }
+                else if (l.type == LightType.Point)
+                {
                     l.enabled = true;
-                    l.intensity = (hour >= 17.8f || hour <= 7.5f) ? 26.0f : 4.5f;
-                    if (l.range < 50f) l.range = 75f;
-                }
-                else if (l.name.Contains("FacadeWash"))
-                {
-                    // Exterior architectural ground floodlights washing the terminal facade
-                    l.enabled = needsFloodlights;
-                    l.intensity = isEvening ? Mathf.Lerp(6.0f, 42.0f, Mathf.InverseLerp(17.5f, 19.5f, hour)) :
-                                  isDawn ? Mathf.Lerp(42.0f, 6.0f, Mathf.InverseLerp(6.0f, 7.5f, hour)) : 1.5f;
-                    if (l.range < 90f) l.range = 120f;
-                }
-                else if (l.name.Contains("CanopyDownlight"))
-                {
-                    l.enabled = (hour >= 17.0f || hour <= 8.0f);
-                    l.intensity = (hour >= 17.0f || hour <= 8.0f) ? 18.0f : 3.0f;
-                    if (l.range < 25f) l.range = 35f;
-                }
-                else if (l.name.Contains("RoofContour"))
-                {
-                    l.enabled = needsFloodlights;
-                    l.intensity = isEvening ? Mathf.Lerp(4.0f, 18.0f, Mathf.InverseLerp(17.5f, 19.5f, hour)) :
-                                  isDawn ? Mathf.Lerp(18.0f, 4.0f, Mathf.InverseLerp(6.0f, 7.5f, hour)) : 1.0f;
-                    if (l.range < 40f) l.range = 55f;
-                }
-                else
-                {
-                    l.enabled = needsFloodlights;
+                    if (l.name.Contains("Beacon"))
+                    {
+                        l.intensity = Mathf.Lerp(2.5f, 6.5f, nightFactor);
+                    }
+                    else
+                    {
+                        l.enabled = needsFloodlights;
+                        l.intensity = Mathf.Lerp(2.0f, 15.0f, nightFactor);
+                    }
                 }
             }
         }
 
-        // 3. Boeing 737 Night Servicing & Belly Lights
+        // ── 4. Terminal Window Glass Material Glow (Emission) ──
+        if (curtainGlassMaterial != null)
+        {
+            curtainGlassMaterial.EnableKeyword("_EMISSION");
+            Color warmInteriorGlow = new Color(1.0f, 0.84f, 0.58f); // 3200K warm interior light
+            curtainGlassMaterial.SetColor("_EmissionColor", warmInteriorGlow * (nightFactor * 1.8f));
+        }
+
+        // ── 5. Aircraft Showcase Night Servicing & Belly Lights ──
         if (aircraftShowcase != null)
         {
             var aLights = aircraftShowcase.GetComponentsInChildren<Light>(true);
@@ -476,18 +579,17 @@ public class TimeOfDayController : MonoBehaviour
             {
                 if (l.name.Contains("BellyFillLight"))
                 {
-                    l.intensity = (hour >= 17.5f) ? 2.5f : 0.85f;
+                    l.intensity = Mathf.Lerp(0.85f, 2.8f, nightFactor);
                 }
                 else if (l.name.Contains("GateServicing"))
                 {
                     l.enabled = needsFloodlights;
-                    l.intensity = isEvening ? Mathf.Lerp(3.0f, 22.0f, Mathf.InverseLerp(17.5f, 19.5f, hour)) :
-                                  isDawn ? Mathf.Lerp(22.0f, 3.0f, Mathf.InverseLerp(6.0f, 7.5f, hour)) : 0f;
+                    l.intensity = Mathf.Lerp(0f, 22.0f, nightFactor);
                 }
             }
         }
 
-        // 4. Fallback for gameplay scenes (e.g. SampleScene) without explicit airport rigs
+        // ── 6. Fallback for standalone scene lights ──
         if (airportLightingRig == null && buildingLightingRig == null)
         {
             var sceneLights = FindObjectsOfType<Light>();
@@ -495,11 +597,64 @@ public class TimeOfDayController : MonoBehaviour
             {
                 if (l == sunLight || l.type == LightType.Directional) continue;
 
-                // Turn on scene lamps, streetlights, spotlights in evening / night
-                if (l.name.Contains("StreetLight") || l.name.Contains("Spotlight") || l.name.Contains("Point Light") || l.name.Contains("VRLight"))
+                if (l.name.Contains("StreetLight") || l.name.Contains("Spotlight") || l.name.Contains("Point Light") || l.name.Contains("VRLight") || l.name.Contains("LED"))
                 {
-                    l.enabled = needsFloodlights;
+                    l.enabled = true;
+                    l.intensity = Mathf.Lerp(1.2f, 4.0f, nightFactor);
                 }
+            }
+        }
+    }
+
+    private void ApplyBuildingLightsGroup(Transform rig, float nightFactor, bool needsFloodlights)
+    {
+        if (rig == null) return;
+
+        var bLights = rig.GetComponentsInChildren<Light>(true);
+        foreach (var l in bLights)
+        {
+            if (l.name.Contains("LED_Panel") || l.name.Contains("Ceiling_Light") || l.name.Contains("Interior") || (l.transform.parent != null && (l.transform.parent.name.Contains("Interior") || l.transform.parent.name.Contains("Lighting_System"))))
+            {
+                // Interior concourse and terminal ceiling panels: always on 24/7 like a real airport, boosted in evening!
+                l.enabled = true;
+                l.intensity = Mathf.Lerp(1.4f, 3.8f, nightFactor);
+                if (l.range < 16f) l.range = 22f;
+                l.shadows = LightShadows.None; // Optimal performance for interior downlights
+            }
+            else if (l.name.Contains("WindowGlow"))
+            {
+                // Terminal concourse interior warm light radiating through curtain glass
+                l.enabled = true;
+                l.intensity = Mathf.Lerp(5.0f, 35.0f, nightFactor);
+                if (l.range < 60f) l.range = 80f;
+            }
+            else if (l.name.Contains("FacadeWash") || l.name.Contains("Front_Floodlight") || l.name.Contains("Rear_Floodlight") || l.name.Contains("Exterior_Flood") || l.name.Contains("Hangar_ExteriorFlood") || l.name.Contains("Apron_Floodlight"))
+            {
+                // Exterior architectural floodlights washing the facade and apron
+                l.enabled = needsFloodlights;
+                l.intensity = Mathf.Lerp(2.0f, 38.0f, nightFactor);
+                if (l.range < 60f) l.range = 95f;
+                l.shadows = LightShadows.Soft;
+            }
+            else if (l.name.Contains("CanopyDownlight") || l.name.Contains("Portal"))
+            {
+                // Canopy entrance and portal downlights
+                l.enabled = true;
+                l.intensity = Mathf.Lerp(3.0f, 20.0f, nightFactor);
+                if (l.range < 25f) l.range = 35f;
+            }
+            else if (l.name.Contains("RoofContour") || l.name.Contains("Neon"))
+            {
+                // Rooftop architectural contour neon
+                l.enabled = needsFloodlights;
+                l.intensity = Mathf.Lerp(1.0f, 16.0f, nightFactor);
+                if (l.range < 40f) l.range = 55f;
+            }
+            else
+            {
+                // Generic building fixtures
+                l.enabled = true;
+                l.intensity = Mathf.Lerp(1.2f, 4.0f, nightFactor);
             }
         }
     }
@@ -525,14 +680,14 @@ public class TimeOfDayController : MonoBehaviour
             phaseLabel = "MORNING ☀️";
         else if (hour < 14.5f)
             phaseLabel = "MIDDAY / NOON ☀️";
-        else if (hour < 17.5f)
+        else if (hour < 17.0f)
             phaseLabel = "AFTERNOON 🌤️";
-        else if (hour < 19.0f)
-            phaseLabel = "GOLDEN HOUR 🌇";
-        else if (hour < 20.0f)
-            phaseLabel = "SUNSET 🌆";
+        else if (hour < 18.5f)
+            phaseLabel = "GOLDEN HOUR / SUNSET 🌇";
+        else if (hour < 19.3f)
+            phaseLabel = "TWILIGHT DUSK 🌆";
         else
-            phaseLabel = "EVENING / DUSK 🌙";
+            phaseLabel = "EVENING / NIGHT 🌙";
 
         return $"{displayH:D2}:{m:D2} {ampm}   •   {phaseLabel}";
     }

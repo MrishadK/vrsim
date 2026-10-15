@@ -62,8 +62,8 @@ public static class SetupAirportBuildingLighting
                     interiorGroup.transform,
                     new Vector3(x, yHeight, z),
                     interiorColor,
-                    1.2f, // Intensity
-                    15f   // Range
+                    2.5f, // Intensity
+                    20f   // Range
                 );
             }
         }
@@ -120,6 +120,8 @@ public static class SetupAirportBuildingLighting
                 }
             }
             if (changed) r.sharedMaterials = mats;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+            r.receiveShadows = true;
         }
 
         UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
@@ -139,7 +141,7 @@ public static class SetupAirportBuildingLighting
         l.color = color;
         l.intensity = intensity;
         l.range = range;
-        l.shadows = LightShadows.Soft;
+        l.shadows = LightShadows.None; // Ceiling point lights provide ambient fill without shadow acne
     }
 
     private static void CreateSpotLight(string name, Transform parent, Vector3 worldPos, Quaternion rotation, Color color, float intensity, float range, float spotAngle)

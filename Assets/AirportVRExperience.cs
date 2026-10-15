@@ -214,7 +214,18 @@ public sealed class AirportVRExperience : MonoBehaviour
             airplaneSplineAnimator = airplane.GetComponent<SplineAnimate>();
 
         if (xrOrigin != null)
+        {
             locomotion = xrOrigin.GetComponent<AirportLocomotion>() ?? xrOrigin.gameObject.AddComponent<AirportLocomotion>();
+
+            var footstepAudio = xrOrigin.GetComponent<PlayerFootstepAudio>() ?? xrOrigin.gameObject.AddComponent<PlayerFootstepAudio>();
+            footstepAudio.BindLocomotion(locomotion);
+
+            var bodyAvatar = xrOrigin.GetComponent<PlayerBodyAvatar>() ?? xrOrigin.gameObject.AddComponent<PlayerBodyAvatar>();
+            bodyAvatar.InitializeAvatar();
+
+            var handsMgr = xrOrigin.GetComponent<VRPovHandsManager>() ?? xrOrigin.gameObject.AddComponent<VRPovHandsManager>();
+            handsMgr.InitializePOVHands();
+        }
     }
 
     private void CaptureInitialState()
@@ -728,7 +739,7 @@ public sealed class AirportVRExperience : MonoBehaviour
 
     private void StartExperience()
     {
-        if (state != ExperienceState.Menu)
+        if (state != ExperienceState.Menu && state != ExperienceState.Boot)
             return;
 
         SetVisible(menuGroup, false);

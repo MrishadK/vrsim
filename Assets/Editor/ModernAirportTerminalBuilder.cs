@@ -676,7 +676,12 @@ public class ModernAirportTerminalBuilder : EditorWindow
         if (rot.HasValue) go.transform.localRotation = rot.Value;
 
         var mr = go.GetComponent<MeshRenderer>();
-        if (mr != null && mat != null) mr.sharedMaterial = mat;
+        if (mr != null && mat != null)
+        {
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+            mr.receiveShadows = true;
+        }
 
         return go;
     }
@@ -690,7 +695,12 @@ public class ModernAirportTerminalBuilder : EditorWindow
         go.transform.localScale = scale;
 
         var mr = go.GetComponent<MeshRenderer>();
-        if (mr != null && mat != null) mr.sharedMaterial = mat;
+        if (mr != null && mat != null)
+        {
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+            mr.receiveShadows = true;
+        }
 
         return go;
     }
@@ -704,7 +714,12 @@ public class ModernAirportTerminalBuilder : EditorWindow
         go.transform.localScale = scale;
 
         var mr = go.GetComponent<MeshRenderer>();
-        if (mr != null && mat != null) mr.sharedMaterial = mat;
+        if (mr != null && mat != null)
+        {
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+            mr.receiveShadows = true;
+        }
 
         return go;
     }

@@ -269,6 +269,13 @@ public class VRPovHandsManager : MonoBehaviour
         proceduralAnimator.triggerAction = triggerAct;
         proceduralAnimator.gripAction = gripAct;
 
+        // Add PlayerHandLocomotionMotion for dynamic gait swing, bobbing, and inertia
+        var locomotionMotion = handObj.GetComponent<PlayerHandLocomotionMotion>();
+        if (locomotionMotion == null)
+            locomotionMotion = handObj.AddComponent<PlayerHandLocomotionMotion>();
+        locomotionMotion.isLeftHand = name.ToLower().Contains("left");
+        locomotionMotion.SetInitialOffsets(posOffset, rotOffset);
+
         return handObj;
     }
 

@@ -85,9 +85,9 @@ public static class MainMenuSetup
         var sun = sunGo.AddComponent<Light>();
         sun.type = LightType.Directional;
         sun.shadows = LightShadows.Soft;
-        sun.shadowStrength = 0.86f;
-        sun.shadowBias = 0.02f;
-        sun.shadowNormalBias = 0.12f;
+        sun.shadowStrength = 1.0f; // 100% solid shadow blocking - prevents sunlight penetrating buildings
+        sun.shadowBias = 0.015f;
+        sun.shadowNormalBias = 0.15f;
         sun.intensity = 1.85f;
         sun.color = new Color(1.0f, 0.95f, 0.88f); // Warm natural daylight (5400K)
         sunGo.transform.rotation = Quaternion.Euler(32f, 48f, 0f);
@@ -287,7 +287,7 @@ public static class MainMenuSetup
             var termRenderers = termGo.GetComponentsInChildren<MeshRenderer>(true);
             foreach (var tr in termRenderers)
             {
-                tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
                 tr.receiveShadows = true;
 
                 var mats = tr.sharedMaterials;
@@ -315,6 +315,9 @@ public static class MainMenuSetup
                 rRot.rotationAxis = Vector3.up;
                 rRot.rotationSpeed = 120f;
             }
+
+            var lSys = termGo.transform.Find("05_Lighting_System");
+            if (lSys != null) tod.modernTerminalLighting = lSys;
         }
 
         // ── Air Traffic Control (ATC) Tower in the distance ──
@@ -1741,6 +1744,7 @@ public static class MainMenuSetup
     {
         var bgRoot = new GameObject("Background_Airport_Environment");
         bgRoot.transform.SetParent(root, false);
+        tod.backgroundEnvironment = bgRoot.transform;
 
         // ── 1. Distant Aircraft Maintenance Hangars ──
         var hangarPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/LowPolyBuildings/LP_AviationHangar_04.prefab");

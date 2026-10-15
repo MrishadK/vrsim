@@ -150,6 +150,15 @@ public static class SetupVRHands
             handObj.AddComponent<ProceduralHandAnimator>();
         }
 
+        // Add PlayerHandLocomotionMotion component for dynamic gait swing, bobbing, and inertia
+        var locomotionMotion = handObj.GetComponent<PlayerHandLocomotionMotion>();
+        if (locomotionMotion == null)
+        {
+            locomotionMotion = handObj.AddComponent<PlayerHandLocomotionMotion>();
+        }
+        locomotionMotion.isLeftHand = handName.ToLower().Contains("left");
+        locomotionMotion.SetInitialOffsets(localPos, localRot);
+
         Undo.RegisterCreatedObjectUndo(handObj, $"Add {handName}");
     }
 }
