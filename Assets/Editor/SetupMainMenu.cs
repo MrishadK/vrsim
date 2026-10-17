@@ -811,20 +811,6 @@ public static class MainMenuSetup
             VersionColor, TextAlignmentOptions.Center,
             Vector2.zero, new Vector2(650f, 28f), new Vector2(0.5f, 0.5f));
 
-        // Camera Switcher Button (Bottom-Right)
-        var camBtnGo = MakeRect("CameraSwitchBtn", bottomBar.transform);
-        SetAnchored(camBtnGo, new Vector2(1f, 0.5f), new Vector2(-25f, 0f), new Vector2(240f, 34f));
-        var camBtnImg = camBtnGo.AddComponent<Image>();
-        camBtnImg.color = new Color(0.08f, 0.18f, 0.32f, 0.95f);
-        var camBtn = camBtnGo.AddComponent<Button>();
-        camBtn.targetGraphic = camBtnImg;
-        UnityEditor.Events.UnityEventTools.AddPersistentListener(camBtn.onClick, camCtrl.CycleCameraView);
-        camBtnGo.AddComponent<UIButtonAudio>();
-
-        MakeTMP("CamBtnText", camBtnGo.transform, "SWITCH VIEW  [ C ]", 12f, FontStyles.Bold,
-            CyanAccent, TextAlignmentOptions.Center,
-            Vector2.zero, new Vector2(240f, 34f), new Vector2(0.5f, 0.5f));
-
         // ═══════════════════════════════════════════
         //  SETTINGS MODAL PANEL (Floating Semi-Transparent)
         // ═══════════════════════════════════════════

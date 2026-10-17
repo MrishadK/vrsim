@@ -146,19 +146,6 @@ public class MenuCinematicCameraController : MonoBehaviour
         {
             cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFOV, Time.deltaTime * transitionSpeed);
         }
-
-        // Keyboard Shortcut: C key to cycle camera views
-#if ENABLE_INPUT_SYSTEM
-        if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.cKey.wasPressedThisFrame)
-        {
-            CycleCameraView();
-        }
-#else
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            CycleCameraView();
-        }
-#endif
     }
 
     public void CycleCameraView()
