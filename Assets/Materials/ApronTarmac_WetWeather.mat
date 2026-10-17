@@ -40,26 +40,22 @@ Material:
         m_Texture: {fileID: 2800000, guid: b849f123bc45de67890123456789ab02, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _RippleNormalMap:
-        m_Texture: {fileID: 2800000, guid: c849f123bc45de67890123456789ab03, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _BumpScale: 1.0
     - _Metallic: 0.05
     - _OcclusionStrength: 1.0
-    - _PuddleAmount: 0.85
-    - _PuddleEdgeWidth: 0.12
-    - _PuddleSmoothness: 0.98
-    - _PuddleTiling: 2.0
+    - _PebbleInfiltration: 0.45
+    - _PuddleAmount: 0.78
+    - _PuddleEdgeWidth: 0.10
+    - _PuddleSmoothness: 0.985
     - _RainIntensity: 1.0
     - _ReceiveShadows: 1.0
-    - _RippleIntensity: 1.6
-    - _RippleSpeed: 2.4
-    - _RippleTiling: 45.0
+    - _RippleDensity: 1.25
+    - _RippleIntensity: 1.8
+    - _RippleSpeed: 1.25
     - _Smoothness: 0.38
     - _WetDarkening: 0.65
     m_Colors:
     - _BaseColor: {r: 0.22, g: 0.22, b: 0.24, a: 1}
-    - _PuddleTint: {r: 0.06, g: 0.07, b: 0.09, a: 1}
+    - _PuddleTint: {r: 0.05, g: 0.06, b: 0.08, a: 1}

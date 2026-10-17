@@ -126,21 +126,20 @@ public static class MainMenuSetup
             var norm = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/pebbled-asphalt1-unity/pebbled_asphalt_Normal-ogl.png");
             var ao = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/pebbled-asphalt1-unity/pebbled_asphalt_ao.png");
             var puddleMask = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/planetextures/Apron_Puddle_Mask.png");
-            var rippleNorm = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/planetextures/Rain_Ripple_Normal.png");
 
             if (albedo != null) tarmacInstance.SetTexture("_BaseMap", albedo);
             if (norm != null) tarmacInstance.SetTexture("_BumpMap", norm);
             if (ao != null) tarmacInstance.SetTexture("_OcclusionMap", ao);
             if (puddleMask != null) tarmacInstance.SetTexture("_PuddleMask", puddleMask);
-            if (rippleNorm != null) tarmacInstance.SetTexture("_RippleNormalMap", rippleNorm);
 
             tarmacInstance.SetTextureScale("_BaseMap", new Vector2(40f, 40f));
-            tarmacInstance.SetFloat("_PuddleTiling", 2.0f);
-            tarmacInstance.SetFloat("_PuddleAmount", 0.85f);
-            tarmacInstance.SetFloat("_PuddleSmoothness", 0.98f);
-            tarmacInstance.SetFloat("_RippleTiling", 45.0f);
-            tarmacInstance.SetFloat("_RippleSpeed", 2.4f);
-            tarmacInstance.SetFloat("_RippleIntensity", 1.6f);
+            tarmacInstance.SetFloat("_PuddleAmount", 0.78f);
+            tarmacInstance.SetFloat("_PuddleSmoothness", 0.985f);
+            tarmacInstance.SetFloat("_PuddleEdgeWidth", 0.10f);
+            tarmacInstance.SetFloat("_PebbleInfiltration", 0.45f);
+            tarmacInstance.SetFloat("_RippleSpeed", 1.25f);
+            tarmacInstance.SetFloat("_RippleIntensity", 1.8f);
+            tarmacInstance.SetFloat("_RippleDensity", 1.25f);
             tarmacInstance.SetFloat("_RainIntensity", 0.0f); // Default dry until rain preset selected
             tarmacInstance.SetFloat("_ReceiveShadows", 1.0f);
         }

@@ -208,15 +208,15 @@ public static class ApronRainPuddleAutoInitializer
             if (norm != null) mat.SetTexture("_BumpMap", norm);
             if (ao != null) mat.SetTexture("_OcclusionMap", ao);
             if (puddleMask != null) mat.SetTexture("_PuddleMask", puddleMask);
-            if (rippleNorm != null) mat.SetTexture("_RippleNormalMap", rippleNorm);
 
             mat.SetTextureScale("_BaseMap", new Vector2(40f, 40f));
-            mat.SetFloat("_PuddleTiling", 2.0f);
-            mat.SetFloat("_PuddleAmount", 0.85f);
-            mat.SetFloat("_PuddleSmoothness", 0.98f);
-            mat.SetFloat("_RippleTiling", 45.0f);
-            mat.SetFloat("_RippleSpeed", 2.4f);
-            mat.SetFloat("_RippleIntensity", 1.6f);
+            mat.SetFloat("_PuddleAmount", 0.78f);
+            mat.SetFloat("_PuddleSmoothness", 0.985f);
+            mat.SetFloat("_PuddleEdgeWidth", 0.10f);
+            mat.SetFloat("_PebbleInfiltration", 0.45f);
+            mat.SetFloat("_RippleSpeed", 1.25f);
+            mat.SetFloat("_RippleIntensity", 1.8f);
+            mat.SetFloat("_RippleDensity", 1.25f);
             mat.SetFloat("_RainIntensity", 1.0f);
             mat.SetFloat("_ReceiveShadows", 1.0f);
 

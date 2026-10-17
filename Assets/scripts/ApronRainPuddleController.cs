@@ -3,8 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// AeroSim VR — Apron Tarmac Rain Ripple, Puddle & Water Accumulation Controller.
-/// Manages dynamic wet asphalt darkening, low-lying puddle accumulation,
-/// animated concentric rain ripples, and ground-impact droplet splash particles.
+/// Manages dynamic wet asphalt darkening, non-repetitive organic puddle accumulation,
+/// physically reactive concentric raindrop ripples, and viewer-anchored ground splash particles.
 /// </summary>
 [ExecuteAlways]
 [SelectionBase]
@@ -21,31 +21,40 @@ public class ApronRainPuddleController : MonoBehaviour
     [Tooltip("Current live rain wetness intensity (0 = dry tarmac, 1 = stormy downpour).")]
     public float rainIntensity = 1.0f;
 
-    [Header("Puddle Configuration")]
+    [Header("Organic Puddle Configuration")]
     [Range(0f, 1f)]
     [Tooltip("Coverage of water puddles forming in surface depressions.")]
-    public float puddleCoverage = 0.85f;
+    public float puddleCoverage = 0.78f;
 
-    [Range(0.80f, 1f)]
+    [Range(0.85f, 1f)]
     [Tooltip("Mirror specular smoothness of standing puddle water.")]
-    public float puddleSmoothness = 0.98f;
+    public float puddleSmoothness = 0.985f;
+
+    [Range(0.01f, 0.4f)]
+    [Tooltip("Soft transition width around puddle waterlines.")]
+    public float puddleEdgeWidth = 0.10f;
+
+    [Range(0f, 1f)]
+    [Tooltip("How strongly water settles into pebble cracks between asphalt stones.")]
+    public float pebbleInfiltration = 0.45f;
 
     [Range(0f, 1f)]
     [Tooltip("How much wet asphalt darkens compared to dry asphalt.")]
     public float wetDarkening = 0.65f;
 
-    public Color puddleWaterTint = new Color(0.06f, 0.07f, 0.09f, 1.0f);
+    public Color puddleWaterTint = new Color(0.05f, 0.06f, 0.08f, 1.0f);
 
-    [Header("Rain Ripple Waves")]
-    [Tooltip("Grid density / tiling of falling raindrop ripple impacts.")]
-    public float rippleTiling = 45.0f;
-
-    [Tooltip("Speed of concentric ripple wave expansion.")]
-    public float rippleSpeed = 2.4f;
+    [Header("Reactive Raindrop Ripple Simulation")]
+    [Tooltip("Speed of concentric capillary wave expansion across water pools.")]
+    public float rippleSpeed = 1.25f;
 
     [Range(0f, 3f)]
-    [Tooltip("Height / perturbation strength of the expanding water ripples.")]
-    public float rippleIntensity = 1.6f;
+    [Tooltip("Wave height & normal perturbation of expanding raindrop rings.")]
+    public float rippleIntensity = 1.8f;
+
+    [Range(0.2f, 3f)]
+    [Tooltip("Frequency of falling raindrop impacts hitting the tarmac.")]
+    public float rippleDensity = 1.25f;
 
     [Header("Physical Splash Particle FX")]
     [Tooltip("Enable visible expanding ripple rings and droplet splashes on the tarmac surface.")]
@@ -67,16 +76,17 @@ public class ApronRainPuddleController : MonoBehaviour
     public bool enableHotkeys = true; // Press 'R' in Play Mode to toggle rain
 
     private float currentWetLevel = 1.0f;
-    private MaterialPropertyBlock propBlock;
 
     // Shader Property IDs
     private static readonly int PropRainIntensity = Shader.PropertyToID("_RainIntensity");
     private static readonly int PropPuddleAmount = Shader.PropertyToID("_PuddleAmount");
     private static readonly int PropPuddleSmoothness = Shader.PropertyToID("_PuddleSmoothness");
     private static readonly int PropPuddleTint = Shader.PropertyToID("_PuddleTint");
-    private static readonly int PropRippleTiling = Shader.PropertyToID("_RippleTiling");
+    private static readonly int PropPuddleEdgeWidth = Shader.PropertyToID("_PuddleEdgeWidth");
+    private static readonly int PropPebbleInfiltration = Shader.PropertyToID("_PebbleInfiltration");
     private static readonly int PropRippleSpeed = Shader.PropertyToID("_RippleSpeed");
     private static readonly int PropRippleIntensity = Shader.PropertyToID("_RippleIntensity");
+    private static readonly int PropRippleDensity = Shader.PropertyToID("_RippleDensity");
     private static readonly int PropWetDarkening = Shader.PropertyToID("_WetDarkening");
 
     private void Awake()
@@ -88,7 +98,6 @@ public class ApronRainPuddleController : MonoBehaviour
         }
         instance = this;
 
-        propBlock = new MaterialPropertyBlock();
         AutoFindReferences();
     }
 
@@ -137,6 +146,10 @@ public class ApronRainPuddleController : MonoBehaviour
         if (rainSplashParticles == null)
         {
             Transform splashChild = transform.Find("ApronRainSplashSystem");
+            if (splashChild == null && tarmacRenderer != null)
+            {
+                splashChild = tarmacRenderer.transform.Find("ApronRainSplashSystem");
+            }
             if (splashChild != null)
             {
                 rainSplashParticles = splashChild.GetComponent<ParticleSystem>();
@@ -176,12 +189,9 @@ public class ApronRainPuddleController : MonoBehaviour
                 }
 
 #if UNITY_EDITOR
-                // Load high-resolution rain ripple normal and puddle mask
+                // Load high-resolution multi-octave puddle mask
                 Texture2D puddleMask = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/planetextures/Apron_Puddle_Mask.png");
-                Texture2D rippleNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/planetextures/Rain_Ripple_Normal.png");
-
                 if (puddleMask != null) newMat.SetTexture("_PuddleMask", puddleMask);
-                if (rippleNorm != null) newMat.SetTexture("_RippleNormalMap", rippleNorm);
 
                 if (newMat.GetTexture("_BaseMap") == null)
                 {
@@ -200,7 +210,7 @@ public class ApronRainPuddleController : MonoBehaviour
 #endif
                 tarmacRenderer.sharedMaterial = newMat;
                 tarmacMaterial = newMat;
-                Debug.Log("<color=#00e676><b>[ApronRainPuddleController]</b></color> Configured ApronTarmac with high-fidelity Rain Puddle & Ripple Shader!");
+                Debug.Log("<color=#00e676><b>[ApronRainPuddleController]</b></color> Configured ApronTarmac with reactive procedural Rain Puddle & Ripple Shader!");
             }
         }
     }
@@ -219,43 +229,42 @@ public class ApronRainPuddleController : MonoBehaviour
 
         GameObject splashGo = new GameObject("ApronRainSplashSystem");
         splashGo.transform.SetParent(parentTransform, false);
-        // Position slightly above the tarmac surface to prevent z-fighting
         splashGo.transform.localPosition = new Vector3(0f, 0.035f, 0f);
-        splashGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face flat against ground
+        splashGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face flat on ground
 
         ParticleSystem ps = splashGo.AddComponent<ParticleSystem>();
         var main = ps.main;
-        main.maxParticles = 1200;
-        main.startLifetime = 0.55f;
-        main.startSpeed = 0.05f;
-        main.startSize = 0.12f;
-        main.startColor = new Color(0.92f, 0.96f, 1.0f, 0.55f);
+        main.maxParticles = 1600;
+        main.startLifetime = 0.45f;
+        main.startSpeed = 0.02f;
+        main.startSize = 0.16f;
+        main.startColor = new Color(0.92f, 0.96f, 1.0f, 0.65f);
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.playOnAwake = true;
 
         var emission = ps.emission;
-        emission.rateOverTime = 380f;
+        emission.rateOverTime = 450f;
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Box;
-        // Cover viewing area around terminal apron
-        shape.scale = new Vector3(80f, 80f, 0.1f);
+        // 50m radius around viewer
+        shape.scale = new Vector3(50f, 50f, 0.05f);
 
-        // Size over lifetime curve (expanding ripple wave)
+        // Expanding shockwave ripple ring curve
         var sizeOverLifetime = ps.sizeOverLifetime;
         sizeOverLifetime.enabled = true;
         AnimationCurve sizeCurve = new AnimationCurve();
-        sizeCurve.AddKey(0f, 0.35f);
-        sizeCurve.AddKey(1f, 2.5f); // Expands outward from drop impact
+        sizeCurve.AddKey(0f, 0.25f);
+        sizeCurve.AddKey(1f, 2.8f);
         sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1.0f, sizeCurve);
 
-        // Color over lifetime (fades out smoothly)
+        // Fade out
         var colorOverLifetime = ps.colorOverLifetime;
         colorOverLifetime.enabled = true;
         Gradient grad = new Gradient();
         grad.SetKeys(
-            new GradientColorKey[] { new GradientColorKey(new Color(0.88f, 0.94f, 1f), 0f), new GradientColorKey(Color.white, 1f) },
-            new GradientAlphaKey[] { new GradientAlphaKey(0.70f, 0f), new GradientAlphaKey(0.45f, 0.3f), new GradientAlphaKey(0f, 1f) }
+            new GradientColorKey[] { new GradientColorKey(new Color(0.90f, 0.96f, 1f), 0f), new GradientColorKey(Color.white, 1f) },
+            new GradientAlphaKey[] { new GradientAlphaKey(0.80f, 0f), new GradientAlphaKey(0.40f, 0.25f), new GradientAlphaKey(0f, 1f) }
         );
         colorOverLifetime.color = grad;
 
@@ -274,7 +283,7 @@ public class ApronRainPuddleController : MonoBehaviour
             if (splashMat.HasProperty("_BaseMap")) splashMat.SetTexture("_BaseMap", splashTex);
         }
 #endif
-        splashMat.color = new Color(0.92f, 0.96f, 1f, 0.65f);
+        splashMat.color = new Color(0.92f, 0.96f, 1f, 0.70f);
         psr.sharedMaterial = splashMat;
 
         rainSplashParticles = ps;
@@ -300,15 +309,16 @@ public class ApronRainPuddleController : MonoBehaviour
             tarmacMaterial.SetFloat(PropRainIntensity, rainIntensity);
             tarmacMaterial.SetFloat(PropPuddleAmount, puddleCoverage);
             tarmacMaterial.SetFloat(PropPuddleSmoothness, puddleSmoothness);
+            tarmacMaterial.SetFloat(PropPuddleEdgeWidth, puddleEdgeWidth);
+            tarmacMaterial.SetFloat(PropPebbleInfiltration, pebbleInfiltration);
             tarmacMaterial.SetColor(PropPuddleTint, puddleWaterTint);
-            tarmacMaterial.SetFloat(PropRippleTiling, rippleTiling);
             tarmacMaterial.SetFloat(PropRippleSpeed, rippleSpeed);
             tarmacMaterial.SetFloat(PropRippleIntensity, rippleIntensity);
+            tarmacMaterial.SetFloat(PropRippleDensity, rippleDensity);
             tarmacMaterial.SetFloat(PropWetDarkening, wetDarkening);
         }
         else
         {
-            // Fallback for Standard URP/Lit if custom shader is not yet applied
             float smooth = Mathf.Lerp(0.38f, puddleSmoothness, rainIntensity);
             tarmacMaterial.SetFloat("_Smoothness", smooth);
             tarmacMaterial.SetFloat("_Metallic", Mathf.Lerp(0.05f, 0.25f, rainIntensity));
@@ -319,13 +329,21 @@ public class ApronRainPuddleController : MonoBehaviour
     {
         if (rainSplashParticles == null) return;
 
+        // Anchor the splash particle box around the viewer/camera on the ground
+        Camera cam = Camera.main;
+        if (cam != null)
+        {
+            Vector3 camPos = cam.transform.position;
+            rainSplashParticles.transform.position = new Vector3(camPos.x, 0.035f, camPos.z);
+        }
+
         var emission = rainSplashParticles.emission;
         bool shouldEmit = enableSplashParticles && (rainIntensity > 0.05f);
 
         emission.enabled = shouldEmit;
         if (shouldEmit)
         {
-            emission.rateOverTime = Mathf.Lerp(30f, 420f, rainIntensity);
+            emission.rateOverTime = Mathf.Lerp(40f, 520f, rainIntensity);
             if (!rainSplashParticles.isPlaying && Application.isPlaying) rainSplashParticles.Play();
         }
         else
