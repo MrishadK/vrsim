@@ -28,6 +28,7 @@ public class AirportWeatherController : MonoBehaviour
     [Header("Rain FX Targets")]
     public ParticleSystem rainParticleSystem;
     public Material tarmacMaterial;
+    public ApronRainPuddleController puddleController;
 
     [Header("References")]
     public TimeOfDayController timeController;
@@ -53,6 +54,11 @@ public class AirportWeatherController : MonoBehaviour
         if (timeController == null)
         {
             timeController = FindObjectOfType<TimeOfDayController>();
+        }
+
+        if (puddleController == null)
+        {
+            puddleController = FindObjectOfType<ApronRainPuddleController>();
         }
 
         ApplyWeather(currentWeather);
@@ -88,6 +94,11 @@ public class AirportWeatherController : MonoBehaviour
             timeController = FindObjectOfType<TimeOfDayController>();
         }
 
+        if (puddleController == null)
+        {
+            puddleController = FindObjectOfType<ApronRainPuddleController>();
+        }
+
         bool isRain = (mode == WeatherMode.RainyStorm);
 
         // 1. Rain Particle System
@@ -103,8 +114,12 @@ public class AirportWeatherController : MonoBehaviour
             }
         }
 
-        // 2. Tarmac Wet Surface Reflection Sheen
-        if (tarmacMaterial != null)
+        // 2. Apron Tarmac Rain Ripples & Puddles
+        if (puddleController != null)
+        {
+            puddleController.SetRainActive(isRain);
+        }
+        else if (tarmacMaterial != null)
         {
             if (isRain)
             {

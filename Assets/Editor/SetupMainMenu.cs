@@ -113,19 +113,55 @@ public static class MainMenuSetup
         groundPlane.transform.localScale = new Vector3(40f, 1f, 40f); // 400m x 400m apron
 
         Material tarmacInstance = null;
+        Shader puddleShader = Shader.Find("AeroSim/ApronTarmac_RainPuddle");
         var runwayMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/pebbled-asphalt1-unity/runway.mat");
-        if (runwayMat != null)
+
+        var groundRenderer = groundPlane.GetComponent<MeshRenderer>();
+        if (puddleShader != null)
         {
-            var groundRenderer = groundPlane.GetComponent<MeshRenderer>();
+            tarmacInstance = new Material(puddleShader);
+            tarmacInstance.name = "ApronTarmac_RainPuddle_Mat";
+
+            var albedo = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/pebbled-asphalt1-unity/pebbled_asphalt_albedo.png");
+            var norm = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/pebbled-asphalt1-unity/pebbled_asphalt_Normal-ogl.png");
+            var ao = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/pebbled-asphalt1-unity/pebbled_asphalt_ao.png");
+            var puddleMask = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/planetextures/Apron_Puddle_Mask.png");
+            var rippleNorm = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/planetextures/Rain_Ripple_Normal.png");
+
+            if (albedo != null) tarmacInstance.SetTexture("_BaseMap", albedo);
+            if (norm != null) tarmacInstance.SetTexture("_BumpMap", norm);
+            if (ao != null) tarmacInstance.SetTexture("_OcclusionMap", ao);
+            if (puddleMask != null) tarmacInstance.SetTexture("_PuddleMask", puddleMask);
+            if (rippleNorm != null) tarmacInstance.SetTexture("_RippleNormalMap", rippleNorm);
+
+            tarmacInstance.SetTextureScale("_BaseMap", new Vector2(40f, 40f));
+            tarmacInstance.SetFloat("_PuddleTiling", 2.0f);
+            tarmacInstance.SetFloat("_PuddleAmount", 0.85f);
+            tarmacInstance.SetFloat("_PuddleSmoothness", 0.98f);
+            tarmacInstance.SetFloat("_RippleTiling", 45.0f);
+            tarmacInstance.SetFloat("_RippleSpeed", 2.4f);
+            tarmacInstance.SetFloat("_RippleIntensity", 1.6f);
+            tarmacInstance.SetFloat("_RainIntensity", 0.0f); // Default dry until rain preset selected
+            tarmacInstance.SetFloat("_ReceiveShadows", 1.0f);
+        }
+        else if (runwayMat != null)
+        {
             tarmacInstance = new Material(runwayMat);
             tarmacInstance.mainTextureScale = new Vector2(40f, 40f);
-            // Crucial fix: Enable ground shadow receiving so aircraft casts grounding contact shadows!
             tarmacInstance.DisableKeyword("_RECEIVE_SHADOWS_OFF");
             tarmacInstance.SetFloat("_ReceiveShadows", 1.0f);
-            tarmacInstance.SetFloat("_Smoothness", 0.40f); // Subtle wet sheen reflection
-            groundRenderer.sharedMaterial = tarmacInstance;
-            groundRenderer.receiveShadows = true;
+            tarmacInstance.SetFloat("_Smoothness", 0.40f);
         }
+
+        groundRenderer.sharedMaterial = tarmacInstance;
+        groundRenderer.receiveShadows = true;
+
+        var puddleCtrl = groundPlane.AddComponent<ApronRainPuddleController>();
+        puddleCtrl.tarmacRenderer = groundRenderer;
+        puddleCtrl.tarmacMaterial = tarmacInstance;
+        puddleCtrl.isRaining = false;
+        puddleCtrl.rainIntensity = 0f;
+        puddleCtrl.SetupSplashParticleSystem();
 
         // ── Comprehensive ICAO Apron Markings (Centerlines, Stop Bars, Safety Envelope, Zipper Road) ──
         CreateRealisticApronMarkings(envRoot.transform);
@@ -436,6 +472,7 @@ public static class MainMenuSetup
         var weatherCtrl = weatherGo.AddComponent<AirportWeatherController>();
         weatherCtrl.rainParticleSystem = ps;
         weatherCtrl.tarmacMaterial = tarmacInstance;
+        weatherCtrl.puddleController = puddleCtrl;
         weatherCtrl.timeController = tod;
 
         // ── Rich Background Airport Infrastructure & City Skyline ──
