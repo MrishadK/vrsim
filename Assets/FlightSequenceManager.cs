@@ -38,11 +38,44 @@ public class FlightSequenceManager : MonoBehaviour
 
     private bool isSequenceStarted = false;
 
+    private void Start()
+    {
+        if (xrOrigin == null)
+        {
+            var origin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+            if (origin != null) xrOrigin = origin.transform;
+            else if (Camera.main != null) xrOrigin = Camera.main.transform.root;
+        }
+
+        if (vrMovementProvider == null && xrOrigin != null)
+        {
+            vrMovementProvider = xrOrigin.GetComponentInChildren<ActionBasedContinuousMoveProvider>();
+        }
+
+        if (airplane == null)
+        {
+            var anim = FindObjectOfType<SplineAnimate>();
+            if (anim != null)
+            {
+                airplane = anim.transform;
+                if (planeSplineAnimator == null) planeSplineAnimator = anim;
+            }
+        }
+        else if (planeSplineAnimator == null)
+        {
+            planeSplineAnimator = airplane.GetComponentInChildren<SplineAnimate>();
+        }
+    }
+
     // --- 1. TRIGGER DETECTION ---
     private void OnTriggerEnter(Collider other)
     {
         // Ensures only the VR player triggers the timeline once
-        if (other.CompareTag("Player") && !isSequenceStarted)
+        bool isPlayer = other.CompareTag("Player") || other.CompareTag("MainCamera")
+                     || other.GetComponentInParent<CharacterController>() != null
+                     || other.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null;
+
+        if (isPlayer && !isSequenceStarted)
         {
             isSequenceStarted = true;
             StartCoroutine(ExecuteFlightTimeline());
@@ -55,8 +88,7 @@ public class FlightSequenceManager : MonoBehaviour
         // Ensure our array isn't empty before proceeding
         if (flightPaths == null || flightPaths.Length == 0)
         {
-            Debug.LogError("Flight Paths array is empty! Please assign your Pushback and Taxiway splines in the Inspector.", this);
-            yield break;
+            Debug.LogWarning("Flight Paths array is empty in FlightSequenceManager. Please assign splines if available.", this);
         }
 
         // STAGE 1: Lock Player Controls & Board the Plane
@@ -64,21 +96,28 @@ public class FlightSequenceManager : MonoBehaviour
             vrMovementProvider.enabled = false;
 
         // Smoothly glide the player from the trigger zone directly into the window seat
-        while (Vector3.Distance(xrOrigin.position, playerSeatTarget.position) > 0.05f)
+        if (xrOrigin != null && playerSeatTarget != null)
         {
-            xrOrigin.position = Vector3.MoveTowards(xrOrigin.position, playerSeatTarget.position, 3.5f * Time.deltaTime);
-            yield return null;
+            while (Vector3.Distance(xrOrigin.position, playerSeatTarget.position) > 0.05f)
+            {
+                xrOrigin.position = Vector3.MoveTowards(xrOrigin.position, playerSeatTarget.position, 3.5f * Time.deltaTime);
+                yield return null;
+            }
+
+            // Perfectly snap position/rotation and lock the player structure as a child of the airplane
+            xrOrigin.position = playerSeatTarget.position;
+            xrOrigin.rotation = playerSeatTarget.rotation;
+            if (airplane != null)
+                xrOrigin.SetParent(airplane);
         }
 
-        // Perfectly snap position/rotation and lock the player structure as a child of the airplane
-        xrOrigin.position = playerSeatTarget.position;
-        xrOrigin.rotation = playerSeatTarget.rotation;
-        xrOrigin.SetParent(airplane);
-
         // STAGE 2: Pre-Flight Blackout
-        blackoutScreen.alpha = 1f;
-        yield return new WaitForSeconds(blackoutDuration);
-        blackoutScreen.alpha = 0f;
+        if (blackoutScreen != null)
+        {
+            blackoutScreen.alpha = 1f;
+            yield return new WaitForSeconds(blackoutDuration);
+            blackoutScreen.alpha = 0f;
+        }
 
         // Wait a few seconds at the gate for immersion
         yield return new WaitForSeconds(initialDelay);

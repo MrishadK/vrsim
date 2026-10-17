@@ -26,14 +26,24 @@ public class PopupTrigger : MonoBehaviour
         }
     }
 
+    private bool IsPlayer(Collider other)
+    {
+        if (other == null) return false;
+        if (other.CompareTag("Player") || other.CompareTag("MainCamera")) return true;
+        if (other.GetComponentInParent<CharacterController>() != null) return true;
+        if (other.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null) return true;
+        return false;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
-        if (!hasTriggered && other.CompareTag("Player"))
+        if (!hasTriggered && IsPlayer(other))
         {
             hasTriggered = true;         
             
             // 1. Show UI and Freeze Player
             if (popupCanvas != null) popupCanvas.SetActive(true); 
+            if (moveProvider == null) moveProvider = FindObjectOfType<ContinuousMoveProviderBase>();
             if (moveProvider != null) moveProvider.enabled = false;
 
             // 2. Trigger all custom Inspector events (like hiding your 3D ring!)
@@ -51,8 +61,6 @@ public class PopupTrigger : MonoBehaviour
         onPopupClosed?.Invoke();
     }
 
-    // This ensures your testing hack ONLY runs on your PC, keeping the Quest APK optimized!
-#if UNITY_EDITOR
     private void Update()
     {
         if (popupCanvas != null && popupCanvas.activeInHierarchy)
@@ -68,7 +76,17 @@ public class PopupTrigger : MonoBehaviour
                 ClosePopup(); 
             }
 #endif
+            // Meta Quest / OpenXR Controller primary button (A / X) support
+            var rightHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
+            if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool aPressed) && aPressed)
+            {
+                ClosePopup();
+            }
+            var leftHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.LeftHand);
+            if (leftHand.isValid && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool xPressed) && xPressed)
+            {
+                ClosePopup();
+            }
         }
     }
-#endif
 }

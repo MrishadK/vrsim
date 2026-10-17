@@ -28,7 +28,13 @@ public class CheckInSequence : MonoBehaviour
 
         // Check if player entered
         string n = other.name.ToLower();
-        if (n.Contains("player") || n.Contains("xr") || other.GetComponent<Camera>() != null || other.GetComponentInParent<Camera>() != null)
+        bool isPlayer = other.CompareTag("Player") || other.CompareTag("MainCamera")
+                     || n.Contains("player") || n.Contains("xr") 
+                     || other.GetComponentInParent<CharacterController>() != null
+                     || other.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null
+                     || other.GetComponent<Camera>() != null || other.GetComponentInParent<Camera>() != null;
+
+        if (isPlayer)
         {
             sequenceTriggered = true;
             StartCoroutine(SequenceCoroutine(other.transform));

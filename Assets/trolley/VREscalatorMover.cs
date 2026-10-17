@@ -31,8 +31,8 @@ public class VREscalatorMover : MonoBehaviour
     {
         // Unity's VR XR Origin uses a CharacterController for its physical body.
         // We check if the thing that just stepped on the escalator has one.
-        CharacterController cc = other.GetComponent<CharacterController>();
-        if (cc != null && other.CompareTag("Player"))
+        CharacterController cc = other.GetComponent<CharacterController>() ?? other.GetComponentInParent<CharacterController>();
+        if (cc != null)
         {
             playerController = cc;
         }

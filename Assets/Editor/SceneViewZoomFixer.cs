@@ -24,12 +24,11 @@ public static class SceneViewZoomFixer
     {
         if (sceneView == null) return;
 
-        // Ensure dynamic clipping is off and near clip is razor-sharp (2cm)
+        // Ensure near clip is razor-sharp (2cm)
         if (sceneView.cameraSettings != null)
         {
-            if (sceneView.cameraSettings.dynamicClipping || sceneView.cameraSettings.nearClip > 0.05f)
+            if (sceneView.cameraSettings.nearClip > 0.05f)
             {
-                sceneView.cameraSettings.dynamicClipping = false;
                 sceneView.cameraSettings.nearClip = 0.02f;
                 if (sceneView.camera != null)
                 {
@@ -47,7 +46,6 @@ public static class SceneViewZoomFixer
         {
             if (sv != null && sv.cameraSettings != null)
             {
-                sv.cameraSettings.dynamicClipping = false;
                 sv.cameraSettings.nearClip = 0.02f;
                 if (sv.camera != null)
                 {
@@ -68,7 +66,7 @@ public static class SceneViewZoomFixer
             EditorUtility.SetDirty(mainCam);
         }
 
-        Debug.Log($"<color=#00e676><b>[SceneViewZoomFixer]</b></color> Configured {count} SceneView(s) with nearClip=0.02m and Dynamic Clipping disabled. Floor will no longer disappear when zooming!");
+        Debug.Log($"<color=#00e676><b>[SceneViewZoomFixer]</b></color> Configured {count} SceneView(s) with nearClip=0.02m. Floor will no longer disappear when zooming!");
     }
 
     [MenuItem("Tools/Aviation/Focus View on Terminal Lounge & Floor")]
@@ -82,7 +80,6 @@ public static class SceneViewZoomFixer
 
         if (sv != null)
         {
-            sv.cameraSettings.dynamicClipping = false;
             sv.cameraSettings.nearClip = 0.02f;
             sv.pivot = new Vector3(20f, 2.5f, 30f); // Terminal lounge center
             sv.size = 5f; // Close distance for smooth responsive zoom

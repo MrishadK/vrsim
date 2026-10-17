@@ -57,7 +57,7 @@ public class BarrierGateController : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         // Simple check for VR player or vehicles
-        if (other.CompareTag("Player") || other.GetComponent<CharacterController>() != null || other.GetComponent<Rigidbody>() != null)
+        if (other.CompareTag("Player") || other.GetComponentInParent<CharacterController>() != null || other.GetComponent<CharacterController>() != null || other.GetComponent<Rigidbody>() != null)
         {
             OpenGate();
         }
@@ -65,7 +65,7 @@ public class BarrierGateController : MonoBehaviour
     
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player") || other.GetComponent<CharacterController>() != null || other.GetComponent<Rigidbody>() != null)
+        if (other.CompareTag("Player") || other.GetComponentInParent<CharacterController>() != null || other.GetComponent<CharacterController>() != null || other.GetComponent<Rigidbody>() != null)
         {
             CloseGate();
         }

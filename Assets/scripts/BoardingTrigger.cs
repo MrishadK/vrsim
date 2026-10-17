@@ -10,12 +10,31 @@ public class BoardingTrigger : MonoBehaviour
 
     private bool triggered = false;
 
+    private void Start()
+    {
+        if (playerRig == null)
+        {
+            var origin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+            if (origin != null) playerRig = origin.transform;
+            else if (Camera.main != null) playerRig = Camera.main.transform.root;
+        }
+
+        if (takeoffScript == null)
+        {
+            takeoffScript = FindObjectOfType<TakeoffSequence>();
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (triggered) return;
 
-        // Check if the player entered the trigger area
-        if (playerRig != null && (other.transform == playerRig || other.transform.IsChildOf(playerRig) || other.name.ToLower().Contains("player") || other.name.ToLower().Contains("xr")))
+        bool isPlayer = (playerRig != null && (other.transform == playerRig || other.transform.IsChildOf(playerRig)))
+                     || other.CompareTag("Player") || other.CompareTag("MainCamera")
+                     || other.GetComponentInParent<CharacterController>() != null
+                     || other.name.ToLower().Contains("player") || other.name.ToLower().Contains("xr");
+
+        if (isPlayer)
         {
             triggered = true;
             Debug.Log("Player boarded the plane. Triggering sequence...");

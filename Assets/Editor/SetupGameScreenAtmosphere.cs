@@ -4,6 +4,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
+using UnityEngine.Splines;
 
 /// <summary>
 /// AeroSim VR — Master Game Screen Atmosphere & Polish Tool.
@@ -81,11 +82,21 @@ public static class SetupGameScreenAtmosphere
         // ─────────────────────────────────────────────
         SetupPlayerLocomotionAndAudio();
 
+        // ─────────────────────────────────────────────
+        // 6. QUEST-OPTIMIZED REFLECTION PROBES
+        // ─────────────────────────────────────────────
+        SetupQuestReflectionProbes();
+
+        // ─────────────────────────────────────────────
+        // 7. BOEING 737 SPLINE & REALISM FIX
+        // ─────────────────────────────────────────────
+        OptimizeBoeing737();
+
         // Mark scenes dirty & save
         EditorSceneManager.MarkAllScenesDirty();
         EditorSceneManager.SaveOpenScenes();
 
-        Debug.Log("<color=#00FFCC>[GameScreenAtmosphere]</color> SUCCESS! Game screen atmosphere, lighting, weather, audio & crowd flow fully initialized!");
+        Debug.Log("<color=#00FFCC>[GameScreenAtmosphere]</color> SUCCESS! Game screen atmosphere, lighting, weather, audio & crowd flow fully initialized for Meta Quest!");
         Debug.Log("<color=#00FFCC>[GameScreenAtmosphere]</color> ═══════════════════════════════════════════");
     }
 
@@ -347,8 +358,6 @@ public static class SetupGameScreenAtmosphere
             {
                 traffic = routeManager.gameObject.AddComponent<AirportTrafficManager>();
             }
-            traffic.maxSimultaneousPassengers = 6;
-            traffic.spawnInterval = 8f;
         }
 
         Debug.Log("<color=#00FFCC>[NPC Flow]</color> AirportTrafficManager and route manager flow active.");
@@ -369,6 +378,8 @@ public static class SetupGameScreenAtmosphere
 
         if (playerRig != null)
         {
+            playerRig.tag = "Player"; // Guarantee Player tag for trigger interactions
+
             var cc = playerRig.GetComponent<CharacterController>();
             if (cc == null)
             {
@@ -398,6 +409,73 @@ public static class SetupGameScreenAtmosphere
         {
             Debug.LogWarning("[Player] No player rig found in scene root.");
         }
+    }
+
+    // ═════════════════════════════════════════════════════
+    //  6. QUEST-OPTIMIZED REFLECTION PROBES
+    // ═════════════════════════════════════════════════════
+
+    private static void SetupQuestReflectionProbes()
+    {
+        Debug.Log("<color=#00FFCC>[Reflection Probes]</color> Configuring Quest-optimized Box-Projected Reflection Probes...");
+
+        var root = GameObject.Find("Quest_Reflection_Probes");
+        if (root != null)
+        {
+            Object.DestroyImmediate(root);
+        }
+
+        root = new GameObject("Quest_Reflection_Probes");
+        root.transform.position = Vector3.zero;
+
+        // Zone 1: Check-in Concourse
+        CreateReflectionProbe(
+            "Probe_CheckIn_Concourse",
+            root.transform,
+            position: new Vector3(5f, 2.0f, -55f),
+            size: new Vector3(32f, 6f, 32f)
+        );
+
+        // Zone 2: Main Concourse & Security Checkpoint
+        CreateReflectionProbe(
+            "Probe_Concourse_Security",
+            root.transform,
+            position: new Vector3(18f, 2.0f, -20f),
+            size: new Vector3(30f, 6f, 40f)
+        );
+
+        // Zone 3: Departure Lounge & Gate A12
+        CreateReflectionProbe(
+            "Probe_Departure_Lounge",
+            root.transform,
+            position: new Vector3(-11f, 2.0f, 4f),
+            size: new Vector3(25f, 6f, 22f)
+        );
+
+        // Zone 4: Apron / Boarding Gate
+        CreateReflectionProbe(
+            "Probe_Apron_Gate",
+            root.transform,
+            position: new Vector3(-6f, 4.0f, 22f),
+            size: new Vector3(50f, 16f, 45f)
+        );
+
+        Debug.Log("<color=#00FFCC>[Reflection Probes]</color> Reflection probes configured (OnAwake, Res 128, Box Projected).");
+    }
+
+    // ═════════════════════════════════════════════════════
+    //  7. BOEING 737 SPLINE & REALISM OPTIMIZATION
+    // ═════════════════════════════════════════════════════
+
+    private static void OptimizeBoeing737()
+    {
+        Debug.Log("<color=#00FFCC>[Aircraft]</color> Configuring Boeing 737 spline animation...");
+        var animators = Object.FindObjectsOfType<SplineAnimate>();
+        foreach (var anim in animators)
+        {
+            anim.PlayOnAwake = false;
+        }
+        Debug.Log("<color=#00FFCC>[Aircraft]</color> Boeing 737 spline animation set to trigger-driven only (PlayOnAwake disabled).");
     }
 
     // ═════════════════════════════════════════════════════
@@ -439,5 +517,21 @@ public static class SetupGameScreenAtmosphere
         l.range = range;
         l.spotAngle = spotAngle;
         l.shadows = LightShadows.None; // Soft task spot
+    }
+
+    private static void CreateReflectionProbe(string name, Transform parent, Vector3 position, Vector3 size)
+    {
+        var fixture = new GameObject(name);
+        fixture.transform.SetParent(parent, false);
+        fixture.transform.position = position;
+
+        var probe = fixture.AddComponent<ReflectionProbe>();
+        probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+        probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.OnAwake;
+        probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
+        probe.resolution = 128;
+        probe.boxProjection = true;
+        probe.size = size;
+        probe.intensity = 1.0f;
     }
 }
