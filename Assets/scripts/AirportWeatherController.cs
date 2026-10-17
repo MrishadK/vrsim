@@ -36,6 +36,19 @@ public class AirportWeatherController : MonoBehaviour
     private Color dryTarmacColor = new Color(0.18f, 0.18f, 0.20f, 1f);
     private Color wetTarmacColor = new Color(0.10f, 0.11f, 0.13f, 1f);
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Bootstrap()
+    {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
+            return;
+
+        if (FindObjectOfType<AirportWeatherController>() == null)
+        {
+            var go = new GameObject("AirportWeatherController");
+            go.AddComponent<AirportWeatherController>();
+        }
+    }
+
     private void Awake()
     {
         if (instance != null && instance != this)
@@ -59,6 +72,24 @@ public class AirportWeatherController : MonoBehaviour
         if (puddleController == null)
         {
             puddleController = FindObjectOfType<ApronRainPuddleController>();
+        }
+
+        if (rainParticleSystem == null)
+        {
+            var rainGo = GameObject.Find("Airport_Rain_System");
+            if (rainGo != null)
+            {
+                rainParticleSystem = rainGo.GetComponent<ParticleSystem>();
+            }
+        }
+
+        if (tarmacMaterial == null)
+        {
+            var r = GameObject.Find("ApronTarmac");
+            if (r != null && r.GetComponent<Renderer>() != null)
+            {
+                tarmacMaterial = r.GetComponent<Renderer>().sharedMaterial;
+            }
         }
 
         ApplyWeather(currentWeather);

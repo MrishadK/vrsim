@@ -35,6 +35,19 @@ public class AirportAmbianceController : MonoBehaviour
     private Light[] flickerLights;
     private float flickerTimer;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Bootstrap()
+    {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
+            return;
+
+        if (FindObjectOfType<AirportAmbianceController>() == null)
+        {
+            var go = new GameObject("AirportAmbianceController");
+            go.AddComponent<AirportAmbianceController>();
+        }
+    }
+
     private void Start()
     {
         if (enableCrowdMurmur) CreateCrowdMurmur();

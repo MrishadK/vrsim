@@ -34,6 +34,19 @@ public class AirportSFXManager : MonoBehaviour
     private Coroutine atcRoutine;
     private bool isRaining = false;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Bootstrap()
+    {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
+            return;
+
+        if (FindObjectOfType<AirportSFXManager>() == null)
+        {
+            var go = new GameObject("AirportSFXManager");
+            go.AddComponent<AirportSFXManager>();
+        }
+    }
+
     private void Awake()
     {
         if (instance != null && instance != this)
@@ -44,7 +57,93 @@ public class AirportSFXManager : MonoBehaviour
         instance = this;
 
         masterVolume = PlayerPrefs.GetFloat("MasterVolume", 1.0f);
+        EnsureClips();
         SetupAudioSources();
+    }
+
+    private void EnsureClips()
+    {
+        if (apronAmbienceClip == null)
+        {
+            apronAmbienceClip = GenerateApronWindClip();
+        }
+        if (atcChatterClip == null)
+        {
+            atcChatterClip = GenerateRadioTransmissionClip();
+        }
+        if (rainLoopClip == null)
+        {
+            rainLoopClip = GenerateRainSoundClip();
+        }
+    }
+
+    private AudioClip GenerateApronWindClip()
+    {
+        int sampleRate = 22050;
+        int length = sampleRate * 5;
+        float[] samples = new float[length];
+        float lp = 0f;
+        for (int i = 0; i < length; i++)
+        {
+            float white = Random.Range(-1f, 1f);
+            lp += (white - lp) * 0.05f; // Deep low-frequency tarmac wind & APU hum
+            float sub = Mathf.Sin(2f * Mathf.PI * 60f * i / sampleRate) * 0.15f; // 60Hz transformer/APU hum
+            samples[i] = (lp * 0.85f + sub) * 0.35f;
+        }
+        var clip = AudioClip.Create("Procedural_ApronWind", length, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private AudioClip GenerateRadioTransmissionClip()
+    {
+        int sampleRate = 22050;
+        int length = (int)(sampleRate * 2.2f);
+        float[] samples = new float[length];
+        for (int i = 0; i < length; i++)
+        {
+            float t = (float)i / sampleRate;
+            float burst = 0f;
+            // Roger/Squelch beep at start and end
+            if (t < 0.12f)
+            {
+                burst = Mathf.Sin(2f * Mathf.PI * 1800f * t) * 0.35f;
+            }
+            else if (t > 2.05f)
+            {
+                burst = Mathf.Sin(2f * Mathf.PI * 1200f * t) * 0.35f;
+            }
+            else
+            {
+                // Simulated band-limited speech formant chatter
+                float formant = Mathf.Sin(2f * Mathf.PI * 400f * t) * 0.3f
+                              + Mathf.Sin(2f * Mathf.PI * 850f * t) * 0.25f
+                              + Mathf.Sin(2f * Mathf.PI * 1600f * t) * 0.2f;
+                float noise = Random.Range(-0.15f, 0.15f);
+                burst = (formant + noise) * 0.25f;
+            }
+            samples[i] = burst;
+        }
+        var clip = AudioClip.Create("Procedural_ATCRadio", length, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private AudioClip GenerateRainSoundClip()
+    {
+        int sampleRate = 22050;
+        int length = sampleRate * 3;
+        float[] samples = new float[length];
+        float lp = 0f;
+        for (int i = 0; i < length; i++)
+        {
+            float white = Random.Range(-1f, 1f);
+            lp += (white - lp) * 0.12f;
+            samples[i] = lp * 0.45f;
+        }
+        var clip = AudioClip.Create("Procedural_RainLoop", length, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
     }
 
     private void Start()
